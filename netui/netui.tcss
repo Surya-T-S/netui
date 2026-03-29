@@ -1,0 +1,99 @@
+NetUIApp {
+  background: $netui-body-bg;
+  layout: vertical;
+}
+
+#main-row {
+  height: 1fr;
+  min-height: 0;
+}
+
+Header {
+  height: 1;
+  background: $netui-header-bg;
+  border-bottom: solid $netui-border;
+  color: $netui-dim;
+}
+
+Header Horizontal {
+  width: 100%;
+  height: 1;
+  align: left middle;
+}
+
+.header-brand {
+  color: $netui-accent;
+  text-style: bold;
+}
+
+.header-sep {
+  color: $netui-dim;
+}
+
+Sidebar {
+  width: 22;
+  min-width: 22;
+  background: $netui-header-bg;
+  border-right: solid $netui-border;
+  padding: 1 0;
+}
+
+Sidebar Label {
+  color: $netui-dim;
+  text-style: bold;
+  padding: 0 1;
+}
+
+ListView {
+  height: auto;
+  background: transparent;
+  border: none;
+  scrollbar-size-vertical: 0;
+}
+
+ListView:focus {
+  background-tint: transparent;
+}
+
+ListItem {
+  background: transparent;
+  color: $netui-value;
+  padding: 0 2;
+}
+
+ListItem.-highlight {
+  background: $netui-highlight-bg;
+  color: $netui-accent;
+}
+
+ContentArea {
+  width: 1fr;
+  min-width: 0;
+  padding: 1 2;
+  background: $netui-body-bg;
+}
+
+ContentArea .panel-body {
+  color: $netui-value;
+  overflow-y: auto;
+}
+
+ContentArea Static.dim {
+  color: $netui-dim;
+}
+
+StatusBar {
+  height: 1;
+  background: $netui-header-bg;
+  border-top: solid $netui-border;
+  color: $netui-dim;
+}
+
+StatusBar Static {
+  width: 100%;
+}
+
+Rule {
+  color: $netui-border;
+  margin: 1 0;
+}

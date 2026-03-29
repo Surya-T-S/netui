@@ -1,0 +1,18 @@
+
+    Name                   : Wi-Fi
+    Description            : Intel(R) Wi-Fi 6 AX201 160MHz
+    GUID                   : aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee
+    Physical address       : 01:23:45:67:89:ab
+    State                  : connected
+    SSID                   : Office5G
+    BSSID                  : aa:bb:cc:11:22:33
+    Network type           : Infrastructure
+    Radio type             : 802.11ax
+    Authentication         : WPA2-Enterprise
+    Cipher                 : CCMP
+    Connection mode        : Auto Connect
+    Channel                : 149
+    Receive rate (Mbps)    : 1201.0
+    Transmit rate (Mbps)   : 960.0
+    Signal                 : 64%
+    Profile                : Office5G

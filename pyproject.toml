@@ -1,0 +1,34 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "netui"
+version = "0.1.0"
+description = "A terminal user interface for network diagnostics"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+keywords = ["network", "tui", "terminal", "diagnostics", "monitoring"]
+dependencies = [
+  "textual>=0.47.0",
+  "psutil>=5.9.0",
+  "dnspython>=2.4.0",
+  "icmplib>=3.0",
+  "rich>=13.0",
+  "httpx>=0.26.0",
+  "anyio>=4.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "pytest-asyncio>=0.21", "textual-dev>=0.47.0"]
+
+[project.scripts]
+netui = "netui.main:run"
+
+[tool.hatch.build.targets.wheel]
+packages = ["netui"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
