@@ -12,6 +12,7 @@ from textual.widgets import Input, LoadingIndicator, Static
 
 from netui import config
 from netui.collectors.dns import DnsResolveResult, bulk_resolve, resolve_host
+from netui.utils.charts import ratio_bar
 from netui.widgets.panel_base import PanelBase
 from netui.widgets.status_bar import StatusBar
 
@@ -29,6 +30,7 @@ class DnsPanel(PanelBase):
     def __init__(self) -> None:
         super().__init__()
         self._results: list[DnsResolveResult] = []
+        self._has_loaded_once = False
 
     def compose(self) -> ComposeResult:
         with VerticalScroll(classes="panel-body", can_focus=False):
@@ -58,7 +60,7 @@ class DnsPanel(PanelBase):
         asyncio.create_task(self._load_initial())
 
     async def _load_initial(self) -> None:
-        self.loading = True
+        self.loading = not self._has_loaded_once
         self._render_view()
         try:
             self._results = await bulk_resolve(config.DEFAULT_DNS_TEST_HOSTS)
@@ -71,6 +73,7 @@ class DnsPanel(PanelBase):
         if not self._results:
             self.show_error("No DNS responses received")
         else:
+            self._has_loaded_once = True
             self.hide_error()
             self.mark_data_fresh(10)
         self._render_view()
@@ -78,7 +81,7 @@ class DnsPanel(PanelBase):
     async def _lookup_single(self, host: str) -> None:
         if not host.strip():
             return
-        self.loading = True
+        self.loading = not self._has_loaded_once
         self._render_view()
         try:
             result = await resolve_host(host.strip())
@@ -88,6 +91,7 @@ class DnsPanel(PanelBase):
             self._render_view()
             return
         self.loading = False
+        self._has_loaded_once = True
         self._results = [result] + [r for r in self._results if r["hostname"] != result["hostname"]]
         self._results.sort(key=lambda row: row["query_time_ms"])
         self.hide_error()
@@ -100,6 +104,7 @@ class DnsPanel(PanelBase):
         table.add_column("IP Addresses")
         table.add_column("TTL", justify="right")
         table.add_column("Query Time", justify="right")
+        table.add_column("Graph")
         table.add_column("Resolver")
         table.add_column("Status")
 
@@ -108,7 +113,9 @@ class DnsPanel(PanelBase):
             needle = self.filter_text.lower()
             filtered = [r for r in self._results if needle in r["hostname"].lower()]
 
-        for row in sorted(filtered, key=lambda r: r["query_time_ms"]):
+        rows_sorted = sorted(filtered, key=lambda r: r["query_time_ms"])
+        peak = max((float(r["query_time_ms"]) for r in rows_sorted), default=1.0)
+        for row in rows_sorted:
             q_ms = row["query_time_ms"]
             if q_ms < 20:
                 q_style = "green"
@@ -116,6 +123,7 @@ class DnsPanel(PanelBase):
                 q_style = "yellow"
             else:
                 q_style = "red"
+            graph = ratio_bar(float(q_ms), peak, width=12)
 
             status = "[green]OK[/green]" if not row["error"] else f"[red]{row['error']}[/red]"
             table.add_row(
@@ -123,6 +131,7 @@ class DnsPanel(PanelBase):
                 ", ".join(row["ip_list"]) if row["ip_list"] else "-",
                 str(row["ttl"]),
                 f"[{q_style}]{q_ms:.1f} ms[/{q_style}]",
+                f"[{q_style}]{graph}[/{q_style}]",
                 row["resolver"] or "-",
                 status,
             )

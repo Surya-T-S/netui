@@ -26,6 +26,7 @@ class WifiPanel(PanelBase):
         super().__init__()
         self._data: WifiInfo | None = None
         self._signal_history: list[float] = []
+        self._has_loaded_once = False
 
     @staticmethod
     def _is_nonfatal_wifi_state(error: str) -> bool:
@@ -65,7 +66,7 @@ class WifiPanel(PanelBase):
         asyncio.create_task(self._refresh_data())
 
     async def _refresh_data(self) -> None:
-        self.loading = True
+        self.loading = not self._has_loaded_once
         self._render_view()
         try:
             data = await get_wifi_info()
@@ -75,6 +76,7 @@ class WifiPanel(PanelBase):
             self._render_view()
             return
         self.loading = False
+        self._has_loaded_once = True
         self._data = data
         err = data.get("error")
         if err:

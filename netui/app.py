@@ -76,8 +76,7 @@ class NetUIApp(App[None]):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._task_scheduler = TaskScheduler()
-        self._pending_module: str | None = None
-        self._module_switch_timer = None
+        self._panel_cache: dict[str, PanelBase] = {}
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -159,15 +158,21 @@ class NetUIApp(App[None]):
         mod = sidebar.query_one("#module-list", ListView)
         keep_iface_focus = iface.has_focus
         keep_mod_focus = mod.has_focus
-        current = self._active_panel()
-        if current is not None and isinstance(current, cls):
-            return
+        cached = self._panel_cache.get(module_name)
+        if cached is None:
+            cached = cls()
+            self._panel_cache[module_name] = cached
+            await content.mount(cached)
 
-        new_panel = cls()
-        previous_children = list(content.children)
-        await content.mount(new_panel)
-        for child in previous_children:
-            await child.remove()
+        for child in list(content.children):
+            if isinstance(child, PanelBase):
+                child.display = child is cached
+            elif getattr(child, "id", "") == "content-placeholder":
+                await child.remove()
+
+        if not cached.display:
+            cached.display = True
+
         if keep_iface_focus:
             iface.focus()
         elif keep_mod_focus:
@@ -175,19 +180,8 @@ class NetUIApp(App[None]):
 
     @on(ModuleSelected)
     def on_module_selected(self, event: ModuleSelected) -> None:
-        self._pending_module = event.module_name
-        if self._module_switch_timer is not None:
-            try:
-                self._module_switch_timer.stop()
-            except Exception:
-                pass
-        self._module_switch_timer = self.set_timer(0.08, self._flush_pending_module)
-
-    def _flush_pending_module(self) -> None:
-        if not self._pending_module:
-            return
-        if self._pending_module in MODULE_PANEL_MAP:
-            self.active_module = self._pending_module
+        if event.module_name in MODULE_PANEL_MAP:
+            self.active_module = event.module_name
 
     @on(InterfaceSelected)
     def on_interface_selected(self, event: InterfaceSelected) -> None:

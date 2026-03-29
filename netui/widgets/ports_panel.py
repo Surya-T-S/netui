@@ -14,6 +14,7 @@ from textual.widgets import DataTable, Input, LoadingIndicator, Static
 
 from netui import config
 from netui.collectors.ports import OpenPortData, get_open_ports
+from netui.utils.charts import ratio_bar
 from netui.widgets.panel_base import PanelBase
 from netui.widgets.status_bar import StatusBar
 
@@ -41,6 +42,7 @@ class PortsPanel(PanelBase):
         super().__init__()
         self._rows: list[OpenPortData] = []
         self._last_update = 0.0
+        self._has_loaded_once = False
 
     def compose(self) -> ComposeResult:
         with VerticalScroll(classes="panel-body", can_focus=False):
@@ -76,7 +78,7 @@ class PortsPanel(PanelBase):
         asyncio.create_task(self._refresh_data())
 
     async def _refresh_data(self) -> None:
-        self.loading = True
+        self.loading = not self._has_loaded_once
         self._render_misc()
         try:
             rows = await get_open_ports()
@@ -89,6 +91,7 @@ class PortsPanel(PanelBase):
         self._rows = rows
         self._last_update = time.monotonic()
         if rows:
+            self._has_loaded_once = True
             self.hide_error()
             self.mark_data_fresh(config.PORT_REFRESH_SECS)
         else:
@@ -113,9 +116,19 @@ class PortsPanel(PanelBase):
         listen = sum(1 for r in rows if r["state"] == "LISTEN")
         est = sum(1 for r in rows if r["state"] == "ESTABLISHED")
         other = max(0, len(rows) - listen - est)
+        total = max(1, len(rows))
+        listen_bar = ratio_bar(float(listen), float(total), width=8)
+        est_bar = ratio_bar(float(est), float(total), width=8)
+        other_bar = ratio_bar(float(other), float(total), width=8)
         self.query_one("#ports-loading", LoadingIndicator).display = self.loading
         self.query_one("#ports-summary", Static).update(
-            f"[cyan]LISTEN: {listen}[/cyan]  |  [green]ESTABLISHED: {est}[/green]  |  [dim]OTHER: {other}[/dim]"
+            "  |  ".join(
+                [
+                    f"[cyan]LISTEN {listen}: {listen_bar}[/cyan]",
+                    f"[green]EST {est}: {est_bar}[/green]",
+                    f"[dim]OTHER {other}: {other_bar}[/dim]",
+                ]
+            )
         )
         self._update_last_updated()
 

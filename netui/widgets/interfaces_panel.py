@@ -11,6 +11,7 @@ from textual.reactive import reactive
 from textual.widgets import DataTable, LoadingIndicator, Static
 
 from netui.collectors.interfaces import InterfaceData, get_interfaces
+from netui.utils.charts import ratio_bar
 from netui.utils.formatters import bytes_to_human
 from netui.widgets.panel_base import PanelBase
 from netui.widgets.status_bar import StatusBar
@@ -26,6 +27,7 @@ class InterfacesPanel(PanelBase):
     def __init__(self) -> None:
         super().__init__()
         self._rows: list[InterfaceData] = []
+        self._has_loaded_once = False
 
     def compose(self) -> ComposeResult:
         with VerticalScroll(classes="panel-body", can_focus=False):
@@ -56,7 +58,7 @@ class InterfacesPanel(PanelBase):
         asyncio.create_task(self._refresh_data())
 
     async def _refresh_data(self) -> None:
-        self.loading = True
+        self.loading = not self._has_loaded_once
         self._render_misc()
         try:
             data = await get_interfaces()
@@ -74,6 +76,7 @@ class InterfacesPanel(PanelBase):
             self._render_detail()
             return
         self.hide_error()
+        self._has_loaded_once = True
         self.mark_data_fresh(5)
         if not self.selected_iface:
             self.selected_iface = data[0]["name"]
@@ -128,12 +131,19 @@ class InterfacesPanel(PanelBase):
         if not selected:
             self.query_one("#if-detail", Static).update("")
             return
+        peak_bytes = max(
+            [float(r["bytes_sent"]) for r in self._rows] + [float(r["bytes_recv"]) for r in self._rows] + [1.0]
+        )
+        tx_bar = ratio_bar(float(selected["bytes_sent"]), peak_bytes, width=16)
+        rx_bar = ratio_bar(float(selected["bytes_recv"]), peak_bytes, width=16)
         detail = "\n".join(
             [
                 f"[bold]{selected['name']}[/bold]",
                 f"IPv4: {selected['ipv4'] or '-'}",
                 f"IPv6: {selected['ipv6'] or '-'}",
                 f"Bytes sent/recv: {bytes_to_human(selected['bytes_sent'])} / {bytes_to_human(selected['bytes_recv'])}",
+                f"TX graph: [cyan]{tx_bar}[/cyan]",
+                f"RX graph: [green]{rx_bar}[/green]",
                 f"Packets sent/recv: {selected['packets_sent']} / {selected['packets_recv']}",
                 f"Errors in/out: {selected['errin']} / {selected['errout']}",
                 f"Drops in/out: {selected['dropin']} / {selected['dropout']}",

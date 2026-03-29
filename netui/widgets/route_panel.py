@@ -12,6 +12,7 @@ from textual.reactive import reactive
 from textual.widgets import LoadingIndicator, Static
 
 from netui.collectors.routes import get_routes
+from netui.utils.charts import ratio_bar
 from netui.widgets.panel_base import PanelBase
 from netui.widgets.status_bar import StatusBar
 
@@ -25,6 +26,7 @@ class RoutePanel(PanelBase):
     def __init__(self) -> None:
         super().__init__()
         self._routes: list[dict[str, object]] = []
+        self._has_loaded_once = False
 
     def compose(self) -> ComposeResult:
         with VerticalScroll(classes="panel-body", can_focus=False):
@@ -50,7 +52,7 @@ class RoutePanel(PanelBase):
         asyncio.create_task(self._refresh_data())
 
     async def _refresh_data(self) -> None:
-        self.loading = True
+        self.loading = not self._has_loaded_once
         self._render_view()
         try:
             self._routes = await get_routes()
@@ -61,6 +63,7 @@ class RoutePanel(PanelBase):
             return
         self.loading = False
         if self._routes:
+            self._has_loaded_once = True
             self.hide_error()
             self.mark_data_fresh(10)
         else:
@@ -75,6 +78,14 @@ class RoutePanel(PanelBase):
         except ValueError:
             ip_num = 0
         return (is_default, ip_num)
+
+    @staticmethod
+    def _metric_value(row: dict[str, object]) -> int:
+        raw = row.get("metric", 0)
+        try:
+            return int(raw)  # type: ignore[arg-type]
+        except Exception:
+            return 0
 
     def _render_view(self) -> None:
         self.query_one("#route-loading", LoadingIndicator).display = self.loading
@@ -97,17 +108,22 @@ class RoutePanel(PanelBase):
         t4.add_column("Gateway")
         t4.add_column("Interface")
         t4.add_column("Metric", justify="right")
+        t4.add_column("Graph")
         t4.add_column("Default")
+        peak_metric = max((self._metric_value(r) for r in ipv4_sorted), default=1)
         for r in ipv4_sorted:
             is_default = str(r.get("destination", "")) == "0.0.0.0"
             star = "★" if is_default else ""
+            metric = self._metric_value(r)
+            graph = ratio_bar(float(metric), float(peak_metric), width=10)
             if is_default:
                 t4.add_row(
                     f"[black on cyan]{r.get('destination', '-')}[/black on cyan]",
                     f"[black on cyan]{r.get('mask', '-')}[/black on cyan]",
                     f"[black on cyan]{r.get('gateway', '-')}[/black on cyan]",
                     f"[black on cyan]{r.get('interface', '-')}[/black on cyan]",
-                    f"[black on cyan]{r.get('metric', '-')}[/black on cyan]",
+                    f"[black on cyan]{metric}[/black on cyan]",
+                    f"[black on cyan]{graph}[/black on cyan]",
                     f"[black on cyan]{star}[/black on cyan]",
                 )
             else:
@@ -116,7 +132,8 @@ class RoutePanel(PanelBase):
                     str(r.get("mask", "-")),
                     str(r.get("gateway", "-")),
                     str(r.get("interface", "-")),
-                    str(r.get("metric", "-")),
+                    str(metric),
+                    graph,
                     star,
                 )
         self.query_one("#route-ipv4", Static).update(t4)
