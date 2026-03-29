@@ -40,12 +40,6 @@ class Sidebar(Widget):
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         self._post_nav_event(event.list_view, event.item)
 
-    @on(ListView.Highlighted)
-    def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
-        if event.item is None:
-            return
-        self._post_nav_event(event.list_view, event.item)
-
     def _post_nav_event(self, list_view: ListView, item: ListItem) -> None:
         label = _list_item_label(item)
         lid = list_view.id or ""
