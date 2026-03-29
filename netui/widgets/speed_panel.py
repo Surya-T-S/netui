@@ -41,7 +41,7 @@ class SpeedPanel(PanelBase):
         self._last_progress_update = 0.0
 
     def compose(self) -> ComposeResult:
-        with VerticalScroll(classes="panel-body"):
+        with VerticalScroll(classes="panel-body", can_focus=False):
             yield Static("", id="stale-badge")
             yield LoadingIndicator(id="speed-loading")
             yield Static("Last run: Never run", id="speed-last-run")

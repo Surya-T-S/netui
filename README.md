@@ -26,6 +26,26 @@ pip install -e ".[dev]"
 python -m netui
 ```
 
+### Update after new GitHub changes
+```bash
+cd netui
+git pull origin main
+source .venv/bin/activate
+pip install -e ".[dev]" --upgrade
+python -m netui
+```
+
+### Install directly from GitHub (no clone)
+```bash
+pip install "git+https://github.com/Surya-T-S/netui.git"
+netui
+```
+
+### Install a stable tagged release
+```bash
+pip install "git+https://github.com/Surya-T-S/netui.git@v0.1.1"
+```
+
 ### Linux
 ```bash
 pip install netui

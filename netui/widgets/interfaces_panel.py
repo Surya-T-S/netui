@@ -28,7 +28,7 @@ class InterfacesPanel(PanelBase):
         self._rows: list[InterfaceData] = []
 
     def compose(self) -> ComposeResult:
-        with VerticalScroll(classes="panel-body"):
+        with VerticalScroll(classes="panel-body", can_focus=False):
             yield Static("", id="stale-badge")
             yield LoadingIndicator(id="if-loading")
             yield DataTable(id="if-table")

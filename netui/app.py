@@ -154,6 +154,11 @@ class NetUIApp(App[None]):
     async def swap_active_module(self, module_name: str) -> None:
         cls = MODULE_PANEL_MAP[module_name]
         content = self.query_one(ContentArea)
+        sidebar = self.query_one(Sidebar)
+        iface = sidebar.query_one("#iface-list", ListView)
+        mod = sidebar.query_one("#module-list", ListView)
+        keep_iface_focus = iface.has_focus
+        keep_mod_focus = mod.has_focus
         current = self._active_panel()
         if current is not None and isinstance(current, cls):
             return
@@ -163,6 +168,10 @@ class NetUIApp(App[None]):
         await content.mount(new_panel)
         for child in previous_children:
             await child.remove()
+        if keep_iface_focus:
+            iface.focus()
+        elif keep_mod_focus:
+            mod.focus()
 
     @on(ModuleSelected)
     def on_module_selected(self, event: ModuleSelected) -> None:

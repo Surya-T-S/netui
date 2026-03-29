@@ -35,7 +35,7 @@ class BandwidthPanel(PanelBase):
         self._started = datetime.now()
 
     def compose(self) -> ComposeResult:
-        with VerticalScroll(classes="panel-body"):
+        with VerticalScroll(classes="panel-body", can_focus=False):
             yield Static("", id="stale-badge")
             yield LoadingIndicator(id="bw-loading")
             yield Static("Interface: -", id="bw-selector")

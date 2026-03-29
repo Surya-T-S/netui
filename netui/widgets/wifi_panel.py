@@ -41,7 +41,7 @@ class WifiPanel(PanelBase):
         )
 
     def compose(self) -> ComposeResult:
-        with VerticalScroll(classes="panel-body"):
+        with VerticalScroll(classes="panel-body", can_focus=False):
             yield Static("", id="stale-badge")
             yield LoadingIndicator(id="wifi-loading")
             yield Static("", id="wifi-meter")

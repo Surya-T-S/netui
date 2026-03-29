@@ -43,7 +43,7 @@ class PortsPanel(PanelBase):
         self._last_update = 0.0
 
     def compose(self) -> ComposeResult:
-        with VerticalScroll(classes="panel-body"):
+        with VerticalScroll(classes="panel-body", can_focus=False):
             yield Static("", id="stale-badge")
             yield LoadingIndicator(id="ports-loading")
             yield Static("", id="ports-summary")

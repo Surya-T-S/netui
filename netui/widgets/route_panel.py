@@ -27,7 +27,7 @@ class RoutePanel(PanelBase):
         self._routes: list[dict[str, object]] = []
 
     def compose(self) -> ComposeResult:
-        with VerticalScroll(classes="panel-body"):
+        with VerticalScroll(classes="panel-body", can_focus=False):
             yield Static("", id="stale-badge")
             yield LoadingIndicator(id="route-loading")
             yield Static("", id="route-summary")

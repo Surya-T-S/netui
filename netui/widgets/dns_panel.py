@@ -31,7 +31,7 @@ class DnsPanel(PanelBase):
         self._results: list[DnsResolveResult] = []
 
     def compose(self) -> ComposeResult:
-        with VerticalScroll(classes="panel-body"):
+        with VerticalScroll(classes="panel-body", can_focus=False):
             yield Static("", id="stale-badge")
             yield LoadingIndicator(id="dns-loading")
             with Horizontal():
